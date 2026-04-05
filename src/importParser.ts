@@ -35,8 +35,8 @@ function normalizeImports(lines: string[]): string[] {
     while (j < out.length) {
       const stripped = stripInlineComment(out[j]);
       combined += ' ' + stripped.trim();
-      if (out[j].includes(')')) { out[j] = ''; break; }
       out[j] = '';
+      if (stripped.includes(')')) { break; }
       j++;
     }
     out[i] = combined.replace(/[()]/g, '').replace(/\s+/g, ' ');

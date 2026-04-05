@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { execFile } from 'child_process';
 
-const EXPORT_RE = /^#\|\s*export\s+([\w.]+)\s*$/;
+const EXPORT_RE = /^#\|\s*export\s+(\w[\w.]*)\s*$/;
 
 const FIND_NAMES_PY = `
 import ast, json, sys
@@ -100,8 +100,10 @@ export async function exportCell(cellUri: vscode.Uri): Promise<void> {
   const targetPath = path.resolve(wsRoot, moduleName.replace(/\./g, '/') + '.py');
   const targetUri = vscode.Uri.file(targetPath);
 
-  // Verify target stays within the workspace
-  if (!targetPath.startsWith(wsRoot)) {
+  // Verify target stays within the workspace (case-insensitive on Windows)
+  const normalizedTarget = path.resolve(targetPath).toLowerCase();
+  const normalizedRoot = (path.resolve(wsRoot) + path.sep).toLowerCase();
+  if (!normalizedTarget.startsWith(normalizedRoot)) {
     vscode.window.showWarningMessage('nbpeek: Export target must be within the workspace.');
     return;
   }
@@ -128,9 +130,7 @@ export async function exportCell(cellUri: vscode.Uri): Promise<void> {
   const replacement = `from ${moduleName} import ${names.join(', ')}`;
 
   // Confirm before writing
-  const label = names.length > 0
-    ? `Export ${names.join(', ')} to ${path.basename(targetPath)}?`
-    : `Export code to ${path.basename(targetPath)}?`;
+  const label = `Export ${names.join(', ')} to ${path.basename(targetPath)}?`;
   const choice = await vscode.window.showInformationMessage(label, 'Export', 'Cancel');
   if (choice !== 'Export') { return; }
 
@@ -139,7 +139,7 @@ export async function exportCell(cellUri: vscode.Uri): Promise<void> {
   try { await vscode.workspace.fs.createDirectory(targetDir); } catch { /* already exists */ }
 
   // Append code to the file
-  const separator = existing && !existing.endsWith('\n\n') ? '\n\n' : existing ? '\n' : '';
+  const separator = existing ? (existing.endsWith('\n\n') ? '' : existing.endsWith('\n') ? '\n' : '\n\n') : '';
   const newContent = existing + separator + code + '\n';
   await vscode.workspace.fs.writeFile(targetUri, Buffer.from(newContent, 'utf-8'));
 

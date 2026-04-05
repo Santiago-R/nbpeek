@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ImportCodeLensProvider } from './codeLensProvider';
-import { peekImport } from './peekCommand';
+import { peekImport, peekedFilesByCell } from './peekCommand';
 import { checkAutoreload } from './autoreload';
 import { exportCell } from './exportCommand';
 
@@ -55,13 +55,29 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidOpenNotebookDocument((nb) => checkAutoreload(nb).catch(() => {}))
   );
 
-  // Save dirty .py files when user switches away
-  // (e.g., closing peek widget or clicking back to a notebook cell to run it)
+  // Auto-save peeked .py files when user switches away
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((_editor) => {
-      for (const doc of vscode.workspace.textDocuments) {
-        if (doc.isDirty && doc.fileName.endsWith('.py')) {
-          doc.save();
+      for (const fileSet of peekedFilesByCell.values()) {
+        for (const uriStr of fileSet) {
+          const doc = vscode.workspace.textDocuments.find(d => d.uri.toString() === uriStr);
+          if (doc?.isDirty) { doc.save(); }
+        }
+      }
+    })
+  );
+
+  // Auto-save peeked .py files when the cell that peeked into them is executed
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeNotebookDocument((e) => {
+      for (const change of e.cellChanges) {
+        if (change.executionSummary === undefined) { continue; }
+        const cellUri = change.cell.document.uri.toString();
+        const fileSet = peekedFilesByCell.get(cellUri);
+        if (!fileSet) { continue; }
+        for (const uriStr of fileSet) {
+          const doc = vscode.workspace.textDocuments.find(d => d.uri.toString() === uriStr);
+          if (doc?.isDirty) { doc.save(); }
         }
       }
     })
