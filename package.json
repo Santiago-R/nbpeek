@@ -1,0 +1,55 @@
+{
+  "name": "nbpeek",
+  "displayName": "nbpeek",
+  "description": "Inline peek views for notebook imports. Edit .py source without leaving the notebook",
+  "version": "0.0.1",
+  "publisher": "nbpeek",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Santiago-R/nbpeek"
+  },
+  "keywords": [
+    "notebook",
+    "jupyter",
+    "nbdev",
+    "peek",
+    "import",
+    "python"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Notebooks",
+    "Other"
+  ],
+  "extensionDependencies": [
+    "ms-python.python"
+  ],
+  "activationEvents": [
+    "onNotebook:jupyter-notebook"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "nbpeek.peekImport",
+        "title": "nbpeek: Peek Import Source"
+      },
+      {
+        "command": "nbpeek.exportCell",
+        "title": "nbpeek: Export Cell to Module"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "npx tsc -p ./",
+    "watch": "npx tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.110.0",
+    "typescript": "^5.3.0"
+  }
+}
