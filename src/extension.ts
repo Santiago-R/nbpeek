@@ -4,10 +4,8 @@ import { peekImport, peekedFilesByCell } from './peekCommand';
 import { checkAutoreload } from './autoreload';
 import { exportCell } from './exportCommand';
 
-let codeLensProvider: ImportCodeLensProvider;
-
 export function activate(context: vscode.ExtensionContext): void {
-  codeLensProvider = new ImportCodeLensProvider();
+  const codeLensProvider = new ImportCodeLensProvider();
 
   // Register CodeLens for Python cells in notebooks
   const selector: vscode.DocumentSelector = {

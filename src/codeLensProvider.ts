@@ -39,28 +39,14 @@ export class ImportCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     // Import peek lenses
-    const symbols = parseImports(text);
-
-    // Group symbols by line so we get one CodeLens per import line
-    const lineMap = new Map<number, typeof symbols>();
-    for (const sym of symbols) {
-      const arr = lineMap.get(sym.line) ?? [];
-      arr.push(sym);
-      lineMap.set(sym.line, arr);
-    }
-
-    for (const [line, syms] of lineMap) {
-      const range = new vscode.Range(line, 0, line, 0);
-
-      for (const sym of syms) {
-        lenses.push(
-          new vscode.CodeLens(range, {
-            title: `⬡ Show ${sym.name}`,
-            command: 'nbpeek.peekImport',
-            arguments: [document.uri, sym.line, sym.column, sym.name],
-          })
-        );
-      }
+    for (const sym of parseImports(text)) {
+      lenses.push(
+        new vscode.CodeLens(new vscode.Range(sym.line, 0, sym.line, 0), {
+          title: `⬡ Show ${sym.name}`,
+          command: 'nbpeek.peekImport',
+          arguments: [document.uri, sym.line, sym.column, sym.name],
+        })
+      );
     }
 
     return lenses;

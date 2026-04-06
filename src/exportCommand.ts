@@ -30,10 +30,6 @@ export function parseExportDirective(text: string): string | null {
 /** Find all top-level defined names using Python's ast module. */
 async function findDefinedNames(code: string): Promise<string[]> {
   const python = await getPython();
-  if (!python) {
-    vscode.window.showWarningMessage('nbpeek: Could not find Python interpreter.');
-    return [];
-  }
   return new Promise((resolve) => {
     const proc = execFile(python, ['-c', FIND_NAMES_PY], { timeout: 5000 }, (err, stdout) => {
       if (err) { resolve([]); return; }
@@ -45,7 +41,7 @@ async function findDefinedNames(code: string): Promise<string[]> {
 }
 
 /** Get the Python path from the active interpreter or fall back to 'python'. */
-async function getPython(): Promise<string | undefined> {
+async function getPython(): Promise<string> {
   try {
     const ext = vscode.extensions.getExtension('ms-python.python');
     if (ext) {
