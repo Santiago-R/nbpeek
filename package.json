@@ -1,7 +1,7 @@
 {
   "name": "nbpeek",
   "displayName": "nbpeek",
-  "description": "Inline peek views for notebook imports. Edit .py source without leaving the notebook",
+  "description": "Peek and edit .py source from notebooks. Export notebook definitions to modules.",
   "version": "0.0.1",
   "publisher": "nbpeek",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "nbdev",
     "peek",
     "import",
+    "export",
     "python"
   ],
   "engines": {
@@ -39,9 +40,17 @@
       },
       {
         "command": "nbpeek.exportCell",
-        "title": "nbpeek: Export Cell to Module"
+        "title": "nbpeek: Export Definitions to Module"
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "nbpeek.peekImport",
+          "when": "false"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "npx tsc -p ./",

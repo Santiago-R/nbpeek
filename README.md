@@ -1,28 +1,30 @@
 # nbpeek
 
-A VS Code extension for editing Python module code directly from Jupyter notebooks. Write `from mymodule import myfunc`, click a button, and edit `myfunc` inline. Changes write to the `.py` file.
+A VS Code extension for notebook-driven Python development. Edit module code inline from your notebook, and export notebook definitions to modules when they're ready, all without leaving the notebook, while building a package of `.py` files as the single source of truth.
 
 ## Usage
 
-1. Open a Jupyter notebook in VS Code.
-2. Write an import like `from mymodule import myfunc` in a code cell.
-3. A `⬡ Show myfunc` button appears above the import line.
-4. Click it — an inline editor opens showing the function's source code from the actual `.py` file.
-5. Edit directly. Changes are saved to the `.py` file automatically when you switch away or run the cell.
-6. The notebook cell stays untouched — it still just has the import.
+### Peek: interact with module code from the notebook
 
-Multi-line parenthesized imports are supported:
+1. A `⬡ Show my_function` button appears above import lines.
+2. On click, an inline editor opens showing the function's source from the actual `.py` file.
+3. Changes are saved to the `.py` file automatically.
+4. The notebook cell stays untouched — it still just has the import.
 
-```python
-from mymodule import (
-    func_a,
-    func_b,
-)
-```
+### Export: move notebook code into modules
+
+When a cell contains top-level `def` or `class` definitions, an `⬡ Export` button appears:
+
+1. Click `⬡ Export` (or run **nbpeek: Export Definitions** from the command palette for any cell).
+2. A multi-select picker shows all definitions in the cell. Functions and classes are pre-selected; assignments are available but unchecked.
+3. Choose a target `.py` file from the workspace, or create a new module.
+4. Selected definitions are appended to the target file. The cell is updated with an import statement, and any remaining code stays in the cell.
+
+This closes the notebook development loop: prototype in the notebook, then promote to a module with a few clicks, then continue to iterate and edit module  code from the notebook. Module and notebook code stay clean and require no upkeep.
 
 ### Autoreload
 
-When you open a notebook, nbpeek offers to add `%load_ext autoreload` / `%autoreload 2` as the first cell so that edits to `.py` files take effect immediately without restarting the kernel.
+When you open a notebook, nbpeek recommends the automatic addition of `%load_ext autoreload` / `%autoreload 2` as the first cell so that edits to `.py` files take effect immediately without restarting the kernel.
 
 ### Auto-save
 
@@ -38,14 +40,16 @@ Files edited through the peek widget are saved automatically:
 
 ## Motivation
 
-The `nbdev` community is split:
+The developer community is split:
 
 - **nbdev enthusiasts** are all for ergonomics. They want all the relevant tools at arm's reach, not to go wandering around a large codebase for simple experiments and optimizations.
 - **nbdev opponents** are all for tidiness and purity. Screwdrivers belong in the screwdriver drawer, nuts and bolts should be neatly classified by size. Damn newbs come with their all-purpose trays (Jupyter notebooks) and make a mess of a nice workshop.
 
 But wait! Software is more flexible than physical workshops!
 
-**nbpeek** takes a different approach from `nbdev`. There are no magic comments or automatic export workflows. Package code lives in `.py` files as the single source of truth, organized however you prefer. Notebooks contain imports plus experiments, visualizations, etc. **nbpeek** simply gives you editable windows into your codebase without leaving the notebook.
+**nbpeek** is inspired by `nbdev` but takes a less disruptive approach that will satisfy your purist colleagues. Notebook-based package development ergonomics are maintained, while the codebase keeps a structure that follows conventional best practices. Package `.py` files as the single source of truth, with notebooks containing imports, experiments, visualizations... There are no magic comments or automatic export workflows.
+
+**nbpeek** gives you two tools: editable windows into your codebase (peek), and simple promotion of notebook code into modules (export). Together, these close the loop on full notebook-driven development without deviating from a conventional repository structure.
 
 ## Architecture Roadmap
 
@@ -53,7 +57,7 @@ But wait! Software is more flexible than physical workshops!
 
 The simplest viable implementation leverages VS Code's built-in Peek Definition widget:
 
-- **CodeLens provider** detects `from X import Y` statements in notebook cells and places a `⬡ Show` button above each imported symbol.
+- **CodeLens provider** detects `from X import Y` statements in notebook cells and places a `⬡ Show` button above each imported symbol. Cells with top-level `def` or `class` definitions get an `⬡ Export` button.
 - On click, the cursor is positioned on the imported symbol and `editor.action.peekDefinition` is triggered.
 - VS Code opens its native inline editor, backed by the real `.py` file, with full Pylance support (autocomplete, type checking, go-to-definition inside the peek).
 - Edits in the peek widget write directly to the `.py` file.
@@ -81,15 +85,20 @@ A public `ZoneWidget` API for persistent embedded editors — the ideal solution
 
 ### Key VS Code APIs
 
-- `vscode.languages.registerCodeLensProvider` — attach `⬡ Show` buttons to import lines.
+- `vscode.languages.registerCodeLensProvider` — attach `⬡ Show` and `⬡ Export` buttons to cells.
 - `vscode.commands.executeCommand('editor.action.peekDefinition')` — open the inline editor.
 - `vscode.executeDefinitionProvider` — resolve symbol locations for auto-save tracking.
 - `vscode.NotebookDocument` / `vscode.NotebookCell` — access notebook cell contents.
 - `vscode.workspace.onDidChangeNotebookDocument` — detect cell execution for auto-save.
+- `vscode.window.showQuickPick` — definition and target file selection for export.
 
 ### Import Detection Strategy
 
 Parse cell text for `from module import name1, name2` patterns, including multi-line parenthesized forms. Uses regex with a normalization pass that collapses multi-line imports.
+
+### Export Detection Strategy
+
+The `⬡ Export` CodeLens appears on cells matching `/^(async\s+)?def\s+|^class\s+/m` (top-level definitions). On click, Python's `ast` module extracts all top-level definitions with their exact line ranges, supporting decorated functions/classes. The user selects which definitions to export via a multi-select QuickPick.
 
 ### Symbol Resolution
 

@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'nbpeek.exportCell',
-      (cellUri: vscode.Uri) => exportCell(cellUri)
+      (cellUri?: vscode.Uri) => exportCell(cellUri)
     )
   );
 
@@ -42,6 +42,21 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     })
   );
+
+  // Retry CodeLens resolution once Pylance is ready.
+  // On startup, provideCodeLenses runs before Pylance has indexed, so
+  // executeDefinitionProvider returns nothing. We refresh when Pylance
+  // starts emitting diagnostics (the first reliable signal it's ready).
+  let pylanceReady = false;
+  const diagListener = vscode.languages.onDidChangeDiagnostics((e) => {
+    if (pylanceReady) { return; }
+    if (e.uris.some(u => u.fsPath.endsWith('.py') || u.scheme === 'vscode-notebook-cell')) {
+      pylanceReady = true;
+      codeLensProvider.refresh();
+      diagListener.dispose();
+    }
+  });
+  context.subscriptions.push(diagListener);
 
   // Check autoreload on already-open notebooks
   for (const nb of vscode.workspace.notebookDocuments) {
