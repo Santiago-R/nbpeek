@@ -2,7 +2,7 @@
   "name": "nbpeek",
   "displayName": "nbpeek",
   "description": "Peek and edit .py source from notebooks. Export notebook definitions to modules.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "Santiago-R",
   "license": "MIT",
   "repository": {
@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/vscode": "^1.110.0",
+    "@types/vscode": "^1.85.0",
     "typescript": "^5.3.0"
   }
 }
