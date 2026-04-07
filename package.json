@@ -3,7 +3,7 @@
   "displayName": "nbpeek",
   "description": "Peek and edit .py source from notebooks. Export notebook definitions to modules.",
   "version": "0.0.1",
-  "publisher": "nbpeek",
+  "publisher": "Santiago-R",
   "license": "MIT",
   "repository": {
     "type": "git",
