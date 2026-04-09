@@ -1,7 +1,29 @@
 import * as vscode from 'vscode';
+import { execFile } from 'child_process';
 import { parseImports } from './importParser';
+import { getPython } from './python';
 
 const HAS_DEFINITION = /^(async\s+)?def\s+|^class\s+/m;
+
+let stdlibModules: Set<string> | undefined;
+
+async function getStdlibModules(): Promise<Set<string>> {
+  if (stdlibModules) { return stdlibModules; }
+  const python = await getPython();
+  return new Promise((resolve) => {
+    execFile(python, ['-c', 'import sys; print("\\n".join(sorted(sys.stdlib_module_names)))'],
+      { timeout: 5000 },
+      (err: Error | null, stdout: string) => {
+        if (err || !stdout.trim()) {
+          stdlibModules = new Set();
+        } else {
+          stdlibModules = new Set(stdout.trim().split('\n'));
+        }
+        resolve(stdlibModules);
+      }
+    );
+  });
+}
 
 export class ImportCodeLensProvider implements vscode.CodeLensProvider {
   private _onDidChange = new vscode.EventEmitter<void>();
@@ -41,9 +63,14 @@ export class ImportCodeLensProvider implements vscode.CodeLensProvider {
     // Import peek lenses — only shown for symbols that resolve to workspace files.
     // Each module is resolved once and cached until the cell text changes.
     const symbols = parseImports(text);
+    const stdlib = await getStdlibModules();
 
     for (const sym of symbols) {
       if (token.isCancellationRequested) { break; }
+
+      // Skip standard library modules
+      const topLevel = sym.module.split('.')[0];
+      if (stdlib.has(topLevel)) { continue; }
 
       if (!this._localModuleCache.has(sym.module)) {
         const pos = new vscode.Position(sym.line, sym.column);

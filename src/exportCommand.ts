@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { execFile } from 'child_process';
+import { getPython } from './python';
 
 interface DefinitionInfo {
   name: string;
@@ -41,19 +42,6 @@ async function findDefinitions(code: string): Promise<DefinitionInfo[]> {
     proc.stdin?.write(code);
     proc.stdin?.end();
   });
-}
-
-async function getPython(): Promise<string> {
-  try {
-    const ext = vscode.extensions.getExtension('ms-python.python');
-    if (ext) {
-      if (!ext.isActive) { await ext.activate(); }
-      const api = ext.exports;
-      const envPath = api?.environments?.getActiveEnvironmentPath?.();
-      if (envPath?.path) { return envPath.path; }
-    }
-  } catch { /* ignore */ }
-  return 'python';
 }
 
 function resolveCell(cellUri?: vscode.Uri): { cell: vscode.NotebookCell; notebook: vscode.NotebookDocument } | undefined {

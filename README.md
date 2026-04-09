@@ -75,7 +75,6 @@ A custom notebook renderer with embedded Monaco editors, enabling:
 
 - Persistent, collapsible inline views with custom styling.
 - Multiple expanded functions visible simultaneously.
-- Auto-expand on cell execution.
 
 ### Future: VS Code API Proposal (v2)
 
